@@ -153,3 +153,125 @@ exports.check = (req, res, next) => {
         answer
     });
 };
+
+ const validateId = id => {
+    return new Sequelize.Promise((resolve, reject) =>{
+        if(typeof id === "undefined"){
+            reject(new Error(`Falta el parametro <id>.`));
+        } else {
+            id = parseInt(id); // coger la parte entera y descartar lo demas
+            if (Number.isNaN(id)){
+                reject(new Error(`El valor del parametro <id> no es un número.`));
+            } else {
+                resolve(id);
+            }
+        }
+    })
+ };
+
+// GET /quizzes/randomplay
+exports.randomplay = (req, res, next) => {
+
+    let score = req.session.score || 0;
+    let arrayQuizzes = [];
+    // array con los ids de las preguntas por contestar
+    if (req.session.randomPlay == null ){
+        console.log("no existe req.session.randomPlay");
+        models.quiz.findAll()
+        .each(quiz =>{
+            if (quiz) {
+                arrayQuizzes.push(quiz.id);
+                console.log("quiz: "+quiz.id+"\n");
+                console.log("array if:"+arrayQuizzes.toString()+"\n");
+            } else {
+                throw new Error('There is no quiz with id=' + quizId);
+            }
+        })
+        .then(()=>{
+            let pos_random = Math.floor(Math.random()*arrayQuizzes.length);
+            console.log("posicion random if: "+pos_random+"\n");
+
+            let indice = arrayQuizzes.splice(pos_random, 1);
+            console.log("indice random if: "+indice+"\n");
+
+            models.quiz.findById(parseInt(indice))
+            .then(quiz => {
+                if (quiz) {
+                    req.session.randomPlay = arrayQuizzes;
+                    res.render('quizzes/random_play', {
+                        quiz,
+                        score,
+                    });
+                } else {
+                    throw new Error('There is no quiz with id=' + quizId);
+                }
+            });
+        });
+    }
+    else{
+        console.log("ya existe req.session.randomPlay");
+        arrayQuizzes = req.session.randomPlay;
+        console.log("array:"+arrayQuizzes.toString()+"\n");
+
+        if(arrayQuizzes.length > 0){
+            let pos_random = Math.floor(Math.random()*arrayQuizzes.length);
+            console.log("posicion random: "+pos_random+"\n");
+
+            let indice = arrayQuizzes.splice(pos_random, 1);
+            console.log("indice random: "+indice+"\n");
+
+            models.quiz.findById(parseInt(indice))
+            .then(quiz => {
+                if (quiz) {
+                    req.session.randomPlay = arrayQuizzes;
+                    res.render('quizzes/random_play', {
+                        quiz,
+                        score,
+                    });
+                } else {
+                    throw new Error('There is no quiz with id=' + quizId);
+                }
+            });
+
+        }
+
+        else{
+            console.log("ya se contestaron todas las preguntas");
+            req.session.randomPlay = null;
+            req.session.score = 0;
+            res.render('quizzes/random_nomore', {
+                        score,
+                    });
+
+        }
+
+        
+    }
+    
+};
+
+// GET /quizzes/randomcheck/:quizId
+exports.randomcheck = (req, res, next) => {
+
+    const {quiz, query} = req;
+
+    let score = req.session.score || 0;
+
+    const answer = query.answer || "";
+    const result = answer.toLowerCase().trim() === quiz.answer.toLowerCase().trim();
+
+    if (result){
+        score++;
+        req.session.score = score;
+    }
+    else{
+        req.session.score = 0;
+    }
+    
+    res.render('quizzes/random_result', {
+        quiz,
+        score,
+        result,
+        answer
+    });
+};
