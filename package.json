@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "heroku local:start",
-    "super": "supervisor ./bin/www",
-    "start_old": "node ./bin/www"
+    "start": "node ./bin/www"
   },
   "engines": {
     "node": "8.9.1",
