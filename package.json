@@ -1,13 +1,12 @@
 {
-  "name": "quiz-2018",
-  "version": "0.0.0",
+  "name": "P7_Quiz",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "heroku local:start",
-    "super": "supervisor ./bin/www",
-    "start_old": "node ./bin/www",
+    "start": "node ./bin/www",
     "migrate_local": "sequelize db:migrate --url sqlite://$(pwd)/quiz.sqlite",
     "seed_local": "sequelize db:seed:all --url sqlite://$(pwd)/quiz.sqlite",
+    "reset_seed_local": "sequelize db:seed:undo:all --url sqlite://$(pwd)/quiz.sqlite",
     "open_heroku": "heroku open",
     "migrate_heroku": "heroku run ./node_modules/.bin/sequelize db:migrate --url \\$DATABASE_URL",
     "seed_heroku": "heroku run ./node_modules/.bin/sequelize db:seed:all --url \\$DATABASE_URL",
@@ -20,12 +19,13 @@
     "npm": "5.6.0"
   },
   "dependencies": {
+    "babel-cli": "^6.26.0",
     "body-parser": "~1.18.2",
     "connect-session-sequelize": "^5.0.1",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "ejs": "~2.5.7",
-    "express": "~4.15.5",
+    "express": "^4.15.5",
     "express-flash": "0.0.2",
     "express-partials": "^0.3.0",
     "express-session": "^1.15.6",
@@ -39,5 +39,13 @@
   },
   "devDependencies": {
     "sqlite3": "^3.1.13"
-  }
+  },
+  "description": "Practica 7 CORE 2018",
+  "main": "app.js",
+  "keywords": [
+    "quiz",
+    "heroku"
+  ],
+  "author": "Hans Huaita Loyola",
+  "license": "UNLICENSED"
 }

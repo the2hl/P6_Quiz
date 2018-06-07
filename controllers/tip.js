@@ -20,14 +20,22 @@ exports.load = (req, res, next, tipId) => {
 
 // POST /quizzes/:quizId/tips
 exports.create = (req, res, next) => {
- 
+
+    /*
+    *   CAMBIOS por HHL:
+    *   guardar el usuario logueado como el autor del tip
+    */
+    const authorId = req.session.user && req.session.user.id|| 0;
+
     const tip = models.tip.build(
         {
             text: req.body.text,
-            quizId: req.quiz.id
+            quizId: req.quiz.id,
+            authorId
+            //authorId: req.quiz.author.id
         });
 
-    tip.save()
+    tip.save({fields: ["text", "quizId", "authorId"]})
     .then(tip => {
         req.flash('success', 'Tip created successfully.');
         res.redirect("back");

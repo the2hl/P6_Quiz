@@ -30,12 +30,22 @@ sequelize.import(path.join(__dirname,'session'));
 
 const {quiz, tip, user} = sequelize.models;
 
+// Relation 1-to-N between Quiz and Tip:
 tip.belongsTo(quiz);
 quiz.hasMany(tip);
 
 // Relation 1-to-N between User and Quiz:
 user.hasMany(quiz, {foreignKey: 'authorId'});
 quiz.belongsTo(user, {as: 'author', foreignKey: 'authorId'});
+
+/*
+* CAMBIOS por HHL:
+* Relation 1-to-N between User and Tip
+*/ 
+user.hasMany(tip, {foreignKey: 'authorId'});
+tip.belongsTo(user, {as: 'author', foreignKey: 'authorId'});
+
+
 
 
 module.exports = sequelize;

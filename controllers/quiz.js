@@ -9,8 +9,12 @@ exports.load = (req, res, next, quizId) => {
 
     models.quiz.findById(quizId, {
         include: [
-            models.tip,
-            {model: models.user, as: 'author'}
+            {model: models.user, as: 'author'},
+            {model: models.tip,
+                include: [
+                    {model: models.user, as: 'author'}
+                ]
+            }
         ]
     })
     .then(quiz => {
@@ -221,6 +225,129 @@ exports.check = (req, res, next) => {
 
     res.render('quizzes/result', {
         quiz,
+        result,
+        answer
+    });
+};
+
+// GET /quizzes/randomplay
+exports.randomplay = (req, res, next) => {
+
+    console.log("\n***** RANDOMPLAY *****\n");
+
+    let score = req.session.score || 0;
+    let arrayQuizzes = [];
+    // array con los ids de las preguntas por contestar
+    if (req.session.randomPlay === 'undefined' || req.session.score == null){
+        console.log("no existe req.session.randomPlay");
+        models.quiz.findAll()
+        .each(quiz =>{
+            if (quiz) {
+                arrayQuizzes.push(quiz.id);
+                console.log("quiz: "+quiz.id+"\n");
+                console.log("ids de preguntas por contestar:"+arrayQuizzes.toString()+"\n");
+            } else {
+                delete req.session.score;
+                delete req.session.randomPlay;
+                throw new Error('There is no quiz with id=' + quiz.id);
+            }
+        })
+        .then(()=>{
+            let pos_random = Math.floor(Math.random()*arrayQuizzes.length);
+            console.log("posicion del array de ids: "+pos_random+"\n");
+
+            let indice = arrayQuizzes.splice(pos_random, 1);
+            console.log("id de quizz para playrandom:"+indice+"\n");
+
+            models.quiz.findById(parseInt(indice))
+            .then(quiz => {
+                if (quiz) {
+                    req.session.randomPlay = arrayQuizzes;
+                    console.log("\n***** RANDOMPLAY *****\n");
+                    res.render('quizzes/random_play', {
+                        quiz,
+                        score,
+                    });
+                } else {
+                    delete req.session.score;
+                    delete req.session.randomPlay;
+                    throw new Error('There is no quiz with id=' + indice);
+                }
+            });
+        });
+    }
+    else{
+        console.log("ya existe req.session.randomPlay");
+        if(req.session.randomPlay.length == 0){
+            console.log("ya se contestaron todas las preguntas");
+            req.session.randomPlay = null;
+            req.session.score = null;
+            console.log("\n***** RANDOMPLAY *****\n");
+            res.render('quizzes/random_nomore', {
+                score,
+            });
+        }
+        else{
+            arrayQuizzes = req.session.randomPlay;
+            console.log("ids de preguntas por contestar:"+arrayQuizzes.toString()+"\n");
+
+            if(arrayQuizzes.length > 0){
+                let pos_random = Math.floor(Math.random()*arrayQuizzes.length);
+                console.log("posicion del array de ids: "+pos_random+"\n");
+
+                let indice = arrayQuizzes.splice(pos_random, 1);
+                console.log("id de quizz para playrandom: "+indice+"\n");
+
+                models.quiz.findById(parseInt(indice))
+                .then(quiz => {
+                    if (quiz) {
+                        req.session.randomPlay = arrayQuizzes;
+                        arrayQuizzes = null;
+                        console.log("\n***** RANDOMPLAY *****\n");
+                        res.render('quizzes/random_play', {
+                            quiz,
+                            score,
+                        });
+                    } else {
+                        delete req.session.score;
+                        delete req.session.randomPlay;
+                        throw new Error('There is no quiz with id=' + indice);
+                    }
+                });
+
+            }
+        }
+    }
+};
+
+// GET /quizzes/randomcheck/:quizId
+exports.randomcheck = (req, res, next) => {
+
+    console.log("\n***** RANDOMCHECK *****\n");
+
+    const {quiz, query} = req;
+
+    let score = req.session.score || 0;
+
+    const answer = query.answer || "";
+    const result = answer.toLowerCase().trim() === quiz.answer.toLowerCase().trim();
+
+    if (result){
+        console.log("respuesta correcta");
+        score++;
+        req.session.score = score;
+    }
+    else{
+        console.log("respuesta incorrecta");
+        req.session.score = null;
+        req.session.randomPlay = null;
+    }
+
+    console.log("\n***** RANDOMCHECK *****\n");
+    
+    res.render('quizzes/random_result', {
+        quiz,
+        score,
         result,
         answer
     });
